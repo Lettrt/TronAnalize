@@ -3,7 +3,7 @@ from .models import Transaction
 import requests
 from django.utils import timezone
 
-def get_transaction_data(request, address):
+def get_transaction_data(address):
     url = f"https://api.trongrid.io/v1/accounts/{address}/transactions"
     response = requests.get(url)
     if response.status_code == 200:
@@ -13,11 +13,15 @@ def get_transaction_data(request, address):
             tx_id = transaction.get('txID')
             block_number = transaction.get('blockNumber')
             timestamp = timezone.make_aware(timezone.datetime.fromtimestamp(transaction.get('block_timestamp') / 1000))
+            ret = transaction.get('ret')
+            if ret is None:
+                continue 
             contract_ret = transaction.get('ret')[0].get('contractRet')
-            
             raw_data_contract = transaction.get('raw_data', {}).get('contract', [])[0]
             parameter = raw_data_contract.get('parameter', {}).get('value', {})
             amount = parameter.get('amount')
+            if amount is None:
+                continue
             owner_address = parameter.get('owner_address')
             to_address = parameter.get('to_address')
             
